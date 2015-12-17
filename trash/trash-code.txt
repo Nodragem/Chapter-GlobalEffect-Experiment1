@@ -1,0 +1,44 @@
+def doRandomDotsTable(d_min, d_max, tol, number, r_min, r_max, res):
+	''' if distance min == -1, the function return just random target dots, without distractor'''
+	distance_min = d_min
+	distance_max = d_max
+	tolerance = tol
+	n = int(number)
+	ecc_min = r_min
+	ecc_max = r_max
+	resolution = res
+
+	X, Y = np.meshgrid(np.arange(0, ecc_max, resolution), np.arange(resolution-ecc_max, ecc_max, resolution) )
+	comb_XY = np.vstack( (X.flatten(), Y.flatten()) )
+	circle_comb = comb_XY[:, (comb_XY[0,:]**2 + comb_XY[1,:]**2 < ecc_max**2) & (comb_XY[0,:]**2 + comb_XY[1,:]**2 > ecc_min**2)]
+	T_x, T_y,D_x,D_y   = [], [], [], []
+
+	if distance_min == -1:
+		r_index = np.random.randint(0, circle_comb.shape[1], number)
+ 		return cartToPol(circle_comb[:, r_index][0], circle_comb[:, r_index][1])
+
+	r_distance = np.random.uniform(distance_min,distance_max,n)
+	distances = []
+	print "start..."
+	for i in xrange(n):
+	    print "search for distance number:", i
+	    dist_constraint = r_distance[i]
+	    dist_DT = -tolerance
+	    while not ((dist_DT > dist_constraint - tolerance) & (dist_DT < dist_constraint + tolerance)):
+	        r_index =  np.random.randint(0, circle_comb.shape[1], 1)
+	        t_x, t_y, = circle_comb[:, r_index]
+	        r_index =  np.random.randint(0, circle_comb.shape[1], 1)
+	        d_x, d_y = circle_comb[:, r_index]
+	        dist_DT = np.sqrt( (d_x-t_x)**2 + (d_y-t_y)**2 )
+	    T_x.append(t_x[0])
+	    T_y.append(t_y[0])
+	    D_x.append(d_x[0])
+	    D_y.append(d_y[0])
+	    distances.append(dist_DT)
+	print "end"
+
+	T_x,T_y,D_x, D_y = np.array(T_x).flatten(), np.array(T_y).flatten(), np.array(D_x).flatten(), np.array(D_y).flatten()
+	T_r, T_theta = cartToPol(T_x, T_y)
+	D_r, D_theta = cartToPol(D_x, D_y)
+	distances = np.array(distances).flatten()
+	return (np.vstack((T_r,T_theta, D_r,D_theta,distances)))
